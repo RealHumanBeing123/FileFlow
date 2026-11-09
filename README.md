@@ -67,7 +67,7 @@ For batch extraction/conversion:
 
 ```FOR /F "tokens=*" %G IN ('dir /b *.flac') DO ffmpeg -i "%G" -acodec mp3 "%~nG.mp3"```
 
-For shortening a video or audio file without putting it into something like [ReelForge](https://github.com/RealHumanBeing123/ReelForge)
+For shortening a video or audio file without putting it into something like [ReelForge for video editing.](https://github.com/RealHumanBeing123/ReelForge)
 
 ```ffmpeg <start time> <input file> <cut duration> <out file>```
 
