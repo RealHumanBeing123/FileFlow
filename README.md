@@ -7,7 +7,8 @@ A simple desktop app (Python + Tkinter) that converts media files between format
 - Quality levels for audio (bitrate), video (CRF), and images (JPEG/WebP quality)
 - Metadata is carried over (tags, cover art, chapters, EXIF)
 
-I know a little bit about video files, a fair bit about audio, but nothing about images. Maybe the image stuff was useless but if it is then ¯\\\_(ツ)\_/¯
+I know a little bit about video files, a fair bit about audio, but nothing about images. 
+Hopefully the image stuff isn't useless but if it is then ¯\\\_(ツ)\_/¯
 
 Screenshot
 
@@ -53,4 +54,21 @@ Text tags (artist, title, dates, etc.), chapters and cover art are kept where th
 ## Layout
 
 - `converter.py`: conversion engine (no GUI; usable from scripts)
+
 - `app.py`: Tkinter interface
+
+## While the software doesn't support extracting audio, I'm going to provide you with the simple command for that. 
+
+One file at a time:
+
+```ffmpeg -i "example.mp4" "example.mp3"```
+
+For batch extraction/conversion:
+
+```FOR /F "tokens=*" %G IN ('dir /b *.flac') DO ffmpeg -i "%G" -acodec mp3 "%~nG.mp3"```
+
+For shortening a video or audio file without putting it into something like [ReelForge](https://github.com/RealHumanBeing123/ReelForge)
+
+```ffmpeg <start time> <input file> <cut duration> <out file>```
+
+```ffmpeg -ss 01:23:45 -i "FullThing.mp4" -to 00:06:00 -c copy "ShortenedThing.mp4"```
