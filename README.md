@@ -7,6 +7,13 @@ A simple desktop app (Python + Tkinter) that converts media files between format
 - Quality levels for audio (bitrate), video (CRF), and images (JPEG/WebP quality)
 - Metadata is carried over (tags, cover art, chapters, EXIF)
 
+I know a little bit about video files, a fair bit about audio, but nothing about images. Maybe the image stuff was useless but if it is then ¯\\\_(ツ)\_/¯
+
+Screenshot
+
+<img width="511" height="375" alt="FileFlow" src="https://github.com/user-attachments/assets/76d28a55-b684-486d-be4c-f0eddbe101f9" />
+
+
 ## Requirements
 
 - Python 3.10+ (Tkinter is included with the standard installers; on Debian/Ubuntu: `sudo apt install python3-tk`)
@@ -15,11 +22,13 @@ A simple desktop app (Python + Tkinter) that converts media files between format
 
 No pip packages needed.
 
-## Run
-
-```
-python app.py
-```
+Set up (if not using the .exe):
+1. Download and unzip the files to where your heart desires
+2. CD to that folder
+3. To compile
+   ```pyinstaller --onefile --windowed --name MediaConverter app.py```
+4. To run it
+  ```python app.py```
 
 ## Supported formats
 
