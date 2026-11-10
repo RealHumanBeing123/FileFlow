@@ -3,7 +3,7 @@
 A simple desktop app (Python + Tkinter) that converts media files between formats using FFmpeg.
 
 - Convert a single file, or every matching file in a folder (optionally including subfolders)
-- Output folder is required; originals are never touched and existing files are never overwritten (`song (1).mp3`)
+- Output folder is required; originals are never touched. If a file with the same name already exists in the output folder, it is skipped (not overwritten, not renamed) and the log shows `SKIP`
 - Quality levels for audio (bitrate), video (CRF), and images (JPEG/WebP quality)
 - Metadata is carried over (tags, cover art, chapters, EXIF)
 

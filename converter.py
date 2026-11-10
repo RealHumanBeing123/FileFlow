@@ -76,18 +76,6 @@ def collect_files(source: Path, category: str, recursive: bool = False) -> list[
     return sorted(p for p in it if p.is_file() and p.suffix.lower() in exts)
 
 
-def unique_path(path: Path) -> Path:
-    """Never overwrite: 'song.mp3' -> 'song (1).mp3' if it already exists."""
-    if not path.exists():
-        return path
-    n = 1
-    while True:
-        candidate = path.with_name(f"{path.stem} ({n}){path.suffix}")
-        if not candidate.exists():
-            return candidate
-        n += 1
-
-
 # ------------------------------------------------------------- commands
 
 def build_command(ffmpeg: str, src: Path, dst: Path, category: str,
@@ -161,12 +149,16 @@ class Result:
     dst: Optional[Path]
     ok: bool
     message: str = ""
+    skipped: bool = False
 
 
 def convert_one(src: Path, out_dir: Path, category: str, fmt: str,
                 quality_index: int, ffmpeg: str,
                 exiftool: Optional[str] = None) -> Result:
-    dst = unique_path(out_dir / f"{src.stem}.{fmt}")
+    dst = out_dir / f"{src.stem}.{fmt}"
+    if dst.exists():
+        # Never overwrite or rename: leave the existing file alone.
+        return Result(src, dst, True, "already exists", skipped=True)
     cmd = build_command(ffmpeg, src, dst, category, quality_index)
     proc = subprocess.run(cmd, capture_output=True, text=True,
                           creationflags=_NO_WINDOW)

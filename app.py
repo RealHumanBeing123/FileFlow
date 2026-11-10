@@ -179,12 +179,17 @@ class App(tk.Tk):
                 if msg[0] == "progress":
                     _, i, r = msg
                     self.bar.configure(value=i)
-                    self._log(("OK    " if r.ok else "FAIL  ") + r.src.name +
-                              ("" if r.ok else f"  — {r.message}"))
+                    if r.skipped:
+                        self._log("SKIP  " + r.src.name + "  — already exists in output folder")
+                    else:
+                        self._log(("OK    " if r.ok else "FAIL  ") + r.src.name +
+                                  ("" if r.ok else f"  — {r.message}"))
                 elif msg[0] == "done":
                     res = msg[1]
-                    ok = sum(r.ok for r in res)
-                    self._log(f"Finished: {ok} succeeded, {len(res) - ok} failed"
+                    skipped = sum(r.skipped for r in res)
+                    ok = sum(r.ok and not r.skipped for r in res)
+                    failed = sum(not r.ok for r in res)
+                    self._log(f"Finished: {ok} converted, {skipped} skipped, {failed} failed"
                               + (" (cancelled)" if self.cancel.is_set() else "") + ".")
                     self._idle()
                 elif msg[0] == "error":
