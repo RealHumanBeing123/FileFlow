@@ -1,4 +1,4 @@
-# Media Converter
+# FileFlow Media Converter
 
 A simple desktop app (Python + Tkinter) that converts media files between formats using FFmpeg.
 
