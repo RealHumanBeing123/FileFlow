@@ -24,13 +24,19 @@ Screenshot
 
 No pip packages needed.
 
-Set up (if not using the .exe):
+## How to compile (if not using the .exe):
+
 1. Download and unzip the files to where your heart desires
+   
 2. CD to that folder
+   
 3. To compile
-   ```pyinstaller --onefile --windowed --name MediaConverter app.py```
-4. To run it
-  ```python app.py```
+   
+```pyinstaller --onefile --windowed --name MediaConverter app.py```
+   
+5. To run it or look in ```FileFlow-main\dist``` for the .exe
+
+ ```python app.py```
 
 ## Supported formats
 
