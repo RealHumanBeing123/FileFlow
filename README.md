@@ -5,6 +5,7 @@ A simple desktop app (Python + Tkinter) that converts media files between format
 - Convert a single file, or every matching file in a folder (optionally including subfolders)
 - Output folder is required; originals are never touched. If a file with the same name already exists in the output folder, it is skipped (not overwritten, not renamed) and the log shows `SKIP`
 - Quality levels for audio (bitrate), video (CRF), and images (JPEG/WebP quality)
+- Extract the audio from video files (choose **Video to Audio** as the media type)
 - Metadata is carried over (tags, cover art, chapters, EXIF)
 
 I know a little bit about video files, a fair bit about audio, but nothing about images. 
@@ -38,12 +39,13 @@ Set up (if not using the .exe):
 | Audio | flac, mp3, wav, aac, m4a, ogg, opus, wma, aiff, alac, ape | mp3, flac, wav, m4a, ogg, opus, aac |
 | Video | mkv, mp4, avi, mov, webm, flv, wmv, m4v, mpg, ts, 3gp | mp4, mkv, webm, mov, avi |
 | Image | jpg, png, webp, bmp, tiff, gif, heic* | jpg, png, webp, bmp, tiff, gif |
+| Video to Audio | mkv, mp4, avi, mov, webm, flv, wmv, m4v, mpg, ts, 3gp | mp3, flac, wav, m4a, ogg, opus, aac |
 
 *HEIC input depends on your FFmpeg build.
 
 ## Quality levels
 
-- **Audio:** 128 / 192 / 256 / 320 kbps (ignored for lossless FLAC and WAV)
+- **Audio** (and **Video to Audio**): 128 / 192 / 256 / 320 kbps (ignored for lossless FLAC and WAV; Opus tops out at 256 kbps and OGG uses Vorbis quality levels that roughly match these)
 - **Video:** CRF-based (H.264 for mp4/mkv/mov, VP9 for webm, MPEG-4 for avi): Low, Medium, High, Very High
 - **Images:** JPEG and WebP quality; PNG compression effort (lossless)
 
@@ -57,7 +59,9 @@ Text tags (artist, title, dates, etc.), chapters and cover art are kept where th
 
 - `app.py`: Tkinter interface
 
-## While the software doesn't support extracting audio, I'm going to provide you with the simple command for that. 
+## Extracting audio from video
+
+The app does this itself: pick **Video to Audio** as the media type, choose the video file(s), an output format and a bitrate. It keeps the first audio track and drops the video. If you'd rather use FFmpeg directly, here are the simple commands.
 
 One file at a time:
 

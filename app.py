@@ -100,18 +100,22 @@ class App(tk.Tk):
 
     def _on_format(self):
         c, f = self.cat.get(), self.fmt.get()
-        lossless = (c == "Audio" and f in cv.LOSSLESS_AUDIO) or \
+        lossless = (c in cv.AUDIO_CATEGORIES and f in cv.LOSSLESS_AUDIO) or \
                    (c == "Image" and f in ("png", "bmp", "tiff", "gif"))
         self.quality.configure(state="disabled" if lossless and
                                not (c == "Image" and f == "png") else "readonly")
-        notes = {True: "This format is lossless; quality setting has little or no effect."}
-        self.q_note.configure(text=notes.get(lossless, ""))
+        notes = []
+        if c == cv.EXTRACT:
+            notes.append("Extracts the first audio track from each video.")
+        if lossless:
+            notes.append("This format is lossless; quality setting has little or no effect.")
+        self.q_note.configure(text=" ".join(notes))
 
     def _pick_file(self):
         exts = " ".join(f"*{e}" for e in sorted(cv.CATEGORIES[self.cat.get()]))
         p = filedialog.askopenfilename(
             title="Choose a file",
-            filetypes=[(f"{self.cat.get()} files", exts), ("All files", "*.*")])
+            filetypes=[(f"{cv.input_kind(self.cat.get())} files", exts), ("All files", "*.*")])
         if p:
             self._set_source(Path(p))
 
@@ -123,7 +127,9 @@ class App(tk.Tk):
     def _set_source(self, path: Path):
         self.source = path
         self.src_var.set(str(path))
-        if path.is_file():
+        if path.is_file() and path.suffix.lower() not in cv.CATEGORIES[self.cat.get()]:
+            # Only switch type when the file doesn't fit the current one, so a
+            # video picked in "Video to Audio" mode doesn't flip back to "Video".
             c = cv.category_of(path)
             if c:
                 self.cat.set(c)
@@ -152,7 +158,7 @@ class App(tk.Tk):
         files = cv.collect_files(self.source, cat, self.recursive.get())
         if not files:
             return messagebox.showinfo("Nothing to convert",
-                                       f"No {cat.lower()} files found in the selection.")
+                                       f"No {cv.input_kind(cat).lower()} files found in the selection.")
         self.cancel.clear()
         self.go.configure(state="disabled")
         self.stop.configure(state="normal")

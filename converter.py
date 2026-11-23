@@ -19,7 +19,13 @@ VIDEO_INPUT = {".mkv", ".mp4", ".avi", ".mov", ".webm", ".flv", ".wmv",
 IMAGE_INPUT = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff",
                ".gif", ".heic"}
 
-CATEGORIES = {"Audio": AUDIO_INPUT, "Video": VIDEO_INPUT, "Image": IMAGE_INPUT}
+# Extra mode: pull the audio track out of a video file (video in, audio out).
+EXTRACT = "Video to Audio"
+
+CATEGORIES = {"Audio": AUDIO_INPUT, "Video": VIDEO_INPUT, "Image": IMAGE_INPUT,
+              EXTRACT: VIDEO_INPUT}
+# Modes whose output is an audio file (they share formats and quality levels).
+AUDIO_CATEGORIES = {"Audio", EXTRACT}
 
 # Output formats offered per category.
 OUTPUT_FORMATS = {
@@ -27,6 +33,7 @@ OUTPUT_FORMATS = {
     "Video": ["mp4", "mkv", "webm", "mov", "avi"],
     "Image": ["jpg", "png", "webp", "bmp", "tiff", "gif"],
 }
+OUTPUT_FORMATS[EXTRACT] = OUTPUT_FORMATS["Audio"]
 
 # Quality presets per category. Order matters (shown in the GUI).
 QUALITY_LEVELS = {
@@ -35,9 +42,11 @@ QUALITY_LEVELS = {
     "Video": ["Low (small file)", "Medium", "High", "Very High (near lossless)"],
     "Image": ["Low", "Medium", "High", "Maximum"],
 }
-DEFAULT_QUALITY = {"Audio": 2, "Video": 1, "Image": 2}  # index into lists
+QUALITY_LEVELS[EXTRACT] = QUALITY_LEVELS["Audio"]
+DEFAULT_QUALITY = {"Audio": 2, "Video": 1, "Image": 2, EXTRACT: 2}  # index into lists
 
 AUDIO_KBPS = [128, 192, 256, 320]
+VORBIS_QUALITY = [4, 6, 8, 9]        # libvorbis -q:a, roughly 128/192/256/320 kbps
 VIDEO_CRF_H264 = [28, 23, 18, 14]
 VIDEO_CRF_VP9 = [40, 33, 28, 22]
 JPEG_QSCALE = [15, 8, 3, 1]          # ffmpeg mjpeg: lower = better
@@ -52,11 +61,17 @@ _NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
 
 def category_of(path: Path) -> Optional[str]:
+    """Which plain media type a file is (never the extract mode)."""
     ext = path.suffix.lower()
     for name, exts in CATEGORIES.items():
-        if ext in exts:
+        if name != EXTRACT and ext in exts:
             return name
     return None
+
+
+def input_kind(category: str) -> str:
+    """Kind of file a mode takes as input, for messages ('Video' for extract)."""
+    return "Video" if category == EXTRACT else category
 
 
 def find_ffmpeg() -> Optional[str]:
@@ -85,8 +100,11 @@ def build_command(ffmpeg: str, src: Path, dst: Path, category: str,
     cmd = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(src),
            "-map_metadata", "0"]
 
-    if category == "Audio":
-        if fmt in COVER_ART_OK:
+    if category in AUDIO_CATEGORIES:
+        if category == EXTRACT:
+            # First audio track only; the video stream is dropped.
+            cmd += ["-map", "0:a:0", "-vn"]
+        elif fmt in COVER_ART_OK:
             # Keep embedded cover art when present.
             cmd += ["-map", "0:a:0", "-map", "0:v?", "-c:v", "copy",
                     "-disposition:v", "attached_pic"]
@@ -96,8 +114,14 @@ def build_command(ffmpeg: str, src: Path, dst: Path, category: str,
                  "m4a": "aac", "aac": "aac", "ogg": "libvorbis",
                  "opus": "libopus"}[fmt]
         cmd += ["-c:a", codec]
-        if fmt not in LOSSLESS_AUDIO:
-            cmd += ["-b:a", f"{AUDIO_KBPS[q]}k"]
+        if fmt == "ogg":
+            # Vorbis is quality-based; a fixed 256/320 kbps fails on mono input.
+            cmd += ["-q:a", str(VORBIS_QUALITY[q])]
+        elif fmt not in LOSSLESS_AUDIO:
+            kbps = AUDIO_KBPS[q]
+            if fmt == "opus":
+                kbps = min(kbps, 256)  # libopus allows 256 kbps per channel; mono fails above
+            cmd += ["-b:a", f"{kbps}k"]
         if fmt == "mp3":
             cmd += ["-id3v2_version", "3"]
 
@@ -165,8 +189,10 @@ def convert_one(src: Path, out_dir: Path, category: str, fmt: str,
     if proc.returncode != 0:
         if dst.exists():
             dst.unlink(missing_ok=True)
-        return Result(src, None, False, proc.stderr.strip().splitlines()[-1]
-                      if proc.stderr.strip() else "FFmpeg failed")
+        err = proc.stderr.strip()
+        if category == EXTRACT and "matches no streams" in err:
+            return Result(src, None, False, "no audio track in this video")
+        return Result(src, None, False, err.splitlines()[-1] if err else "FFmpeg failed")
     if category == "Image" and exiftool:
         _copy_image_metadata(exiftool, src, dst)
     return Result(src, dst, True)
